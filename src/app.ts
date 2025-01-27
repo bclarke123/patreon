@@ -2,6 +2,10 @@ import Koa, { Context } from 'koa';
 import Router from 'koa-router';
 import session from 'koa-session';
 
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { fromEnv } from '@aws-sdk/credential-providers';
+
 require('dotenv').config();
 
 const clientId = process.env.CLIENT_ID;
@@ -9,9 +13,10 @@ const clientSecret = process.env.CLIENT_SECRET;
 const redirectUri = process.env.REDIRECT_URI;
 
 const app = new Koa();
-app.keys = [ process.env.SESSION_KEY ];
 
+app.keys = [ process.env.SESSION_KEY ];
 app.use(session(app));
+
 const router = new Router();
 
 router.get('/login', async (ctx: Context) => {
@@ -93,8 +98,38 @@ router.get('/user', async (ctx: Context) => {
         return;
     }
 
-    ctx.status = 200;
-    ctx.body = JSON.stringify(userResponse, null, 2);
+    const { data } = userResponse;
+    const memberships = data?.relationships?.memberships?.data;
+
+    if (!memberships) {
+        ctx.status = 400;
+        ctx.body = 'No memberships found';
+        return;
+    }
+
+    const [ membership ] = memberships;
+
+    if (membership) {
+        // generate a presigned URL to access the S3 bucket
+        const s3 = new S3Client({
+            region: 'us-east-1',
+            credentials: fromEnv()
+        });
+
+        const command = new GetObjectCommand({
+            Bucket: 'ben-patreon-test',
+            Key: 'doge.png'
+        });
+
+        const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+
+        ctx.status = 302;
+        ctx.set('Location', url);
+        return;
+    }
+
+    ctx.status = 400;
+    ctx.body = 'No membership found';
 });
 
 app.use(router.routes());
