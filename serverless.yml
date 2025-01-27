@@ -15,6 +15,13 @@ provider:
     REDIRECT_URI: ${env:REDIRECT_URI}
     SESSION_KEY: ${env:SESSION_KEY}
 
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action: "s3:GetObject"
+          Resource: "arn:aws:s3:::ben-patreon-test/*"
+
   httpApi:
     cors:
       allowedOrigins:
