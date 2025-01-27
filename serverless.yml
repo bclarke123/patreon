@@ -1,0 +1,43 @@
+org: benclarke
+app: patreon
+service: patreon
+frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  timeout: 20
+  httpApi:
+    cors:
+      allowedOrigins:
+        - 'http://localhost:3000'
+      allowedHeaders:
+        - Content-Type
+        - X-Amz-Date
+        - Authorization
+        - X-Api-Key
+        - X-Amz-Security-Token
+      allowedMethods:
+        - GET
+        - POST
+      allowCredentials: false
+
+functions:
+  api:
+    handler: ./src/lambda.handler
+    events:
+      - httpApi:
+          path: /{any+}
+          method: ANY
+package:
+  individually: true
+  patterns: 
+    - '!node_modules/.prisma/client/libquery_engine-*'
+    - '!node_modules/.prisma/client/query_engine-*'
+    - 'node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0*'
+    - '!node_modules/prisma/libquery_engine-*'
+    - '!node_modules/@prisma/engines/**'
