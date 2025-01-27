@@ -1,20 +1,24 @@
 org: benclarke
 app: patreon
 service: patreon
-frameworkVersion: '3'
 
-plugins:
-  - serverless-plugin-typescript
-  - serverless-dotenv-plugin
+useDotenv: true
 
 provider:
   name: aws
   runtime: nodejs22.x
   timeout: 20
+
+  environment:
+    CLIENT_ID: ${env:CLIENT_ID}
+    CLIENT_SECRET: ${env:CLIENT_SECRET}
+    REDIRECT_URI: ${env:REDIRECT_URI}
+    SESSION_KEY: ${env:SESSION_KEY}
+
   httpApi:
     cors:
       allowedOrigins:
-        - 'http://localhost:3000'
+        - 'https://pmoqcq122m.execute-api.us-east-1.amazonaws.com'
       allowedHeaders:
         - Content-Type
         - X-Amz-Date
