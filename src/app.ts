@@ -40,6 +40,7 @@ router.get('/login', async (ctx: Context) => {
 router.get('/oauth/callback', async (ctx: Context) => {
     const { code, state } = ctx.query;
     const sessionState = ctx.session.state;
+    ctx.session.state = undefined;
 
     if (state !== sessionState) {
         ctx.status = 400;
@@ -52,8 +53,6 @@ router.get('/oauth/callback', async (ctx: Context) => {
         ctx.body = 'Code not found';
         return;
     }
-
-    ctx.session.state = undefined;
 
     const request = await fetch(apiUrl('api/oauth2/token'), {
         method: 'POST',
@@ -78,7 +77,6 @@ router.get('/oauth/callback', async (ctx: Context) => {
     }
 
     const authToken = response.access_token;
-
     ctx.session.authToken = authToken;
 
     ctx.status = 302;
