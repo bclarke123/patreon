@@ -14,18 +14,21 @@ provider:
     CLIENT_SECRET: ${env:CLIENT_SECRET}
     REDIRECT_URI: ${env:REDIRECT_URI}
     SESSION_KEY: ${env:SESSION_KEY}
+    BUCKET_ARN: ${env:BUCKET_ARN}
+    BUCKET_NAME: ${env:BUCKET_NAME}
+    FILE_KEY: ${env:FILE_KEY}
 
   iam:
     role:
       statements:
         - Effect: "Allow"
           Action: "s3:GetObject"
-          Resource: "arn:aws:s3:::ben-patreon-test/*"
+          Resource: ${env:BUCKET_ARN}
 
   httpApi:
     cors:
       allowedOrigins:
-        - 'https://pmoqcq122m.execute-api.us-east-1.amazonaws.com'
+        - ${env:ORIGIN}
       allowedHeaders:
         - Content-Type
         - X-Amz-Date
@@ -44,11 +47,3 @@ functions:
       - httpApi:
           path: /{any+}
           method: ANY
-package:
-  individually: true
-  patterns: 
-    - '!node_modules/.prisma/client/libquery_engine-*'
-    - '!node_modules/.prisma/client/query_engine-*'
-    - 'node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0*'
-    - '!node_modules/prisma/libquery_engine-*'
-    - '!node_modules/@prisma/engines/**'
