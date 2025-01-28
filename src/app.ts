@@ -19,7 +19,7 @@ const apiUrl = (path: string) => `https://www.patreon.com/${path}`;
 
 const app = new Koa();
 
-app.keys = [ process.env.SESSION_KEY ];
+app.keys = [process.env.SESSION_KEY];
 app.use(session(app));
 
 const router = new Router();
@@ -109,29 +109,29 @@ router.get('/user', async (ctx: Context) => {
         return;
     }
 
-    const [ membership ] = memberships;
+    const [membership] = memberships;
 
-    if (membership) {
-        // generate a presigned URL to access the S3 bucket
-        const s3 = new S3Client({
-            region: 'us-east-1',
-            credentials: fromEnv()
-        });
-
-        const command = new GetObjectCommand({
-            Bucket: bucket || '',
-            Key: file || ''
-        });
-
-        const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-
-        ctx.status = 302;
-        ctx.set('Location', url);
+    if (!membership) {
+        ctx.status = 400;
+        ctx.body = 'No membership found';
         return;
     }
 
-    ctx.status = 400;
-    ctx.body = 'No membership found';
+    // generate a presigned URL to access the S3 bucket
+    const s3 = new S3Client({
+        region: 'us-east-1',
+        credentials: fromEnv()
+    });
+
+    const command = new GetObjectCommand({
+        Bucket: bucket || '',
+        Key: file || ''
+    });
+
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+
+    ctx.status = 302;
+    ctx.set('Location', url);
 });
 
 app.use(router.routes());
