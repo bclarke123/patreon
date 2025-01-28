@@ -12,6 +12,11 @@ const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const redirectUri = process.env.REDIRECT_URI;
 
+const bucket = process.env.BUCKET_NAME;
+const file = process.env.FILE_KEY;
+
+const apiUrl = (path: string) => `https://www.patreon.com/${path}`;
+
 const app = new Koa();
 
 app.keys = [ process.env.SESSION_KEY ];
@@ -20,14 +25,13 @@ app.use(session(app));
 const router = new Router();
 
 router.get('/login', async (ctx: Context) => {
-    const domain = 'https://www.patreon.com/oauth2/authorize';
     const scope = 'identity campaigns';
     const redirect = encodeURIComponent(redirectUri || '');
     const state = ((Math.random() * 0x1000000) | 0).toString(16).padStart(6, '0');
 
     ctx.session.state = state;
 
-    const url = `${domain}?response_type=code&client_id=${clientId}&redirect_uri=${redirect}&scope=${scope}&state=${state}`;
+    const url = apiUrl(`oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirect}&scope=${scope}&state=${state}`);
 
     ctx.status = 302;
     ctx.set('Location', url);
@@ -51,7 +55,7 @@ router.get('/oauth/callback', async (ctx: Context) => {
 
     ctx.session.state = undefined;
 
-    const request = await fetch('https://www.patreon.com/api/oauth2/token', {
+    const request = await fetch(apiUrl('api/oauth2/token'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -84,7 +88,7 @@ router.get('/oauth/callback', async (ctx: Context) => {
 router.get('/user', async (ctx: Context) => {
     const authToken = ctx.session.authToken;
 
-    const userRequest = await fetch('https://www.patreon.com/api/oauth2/v2/identity?include=memberships', {
+    const userRequest = await fetch(apiUrl('api/oauth2/v2/identity?include=memberships'), {
         headers: {
             Authorization: `Bearer ${authToken}`
         }
@@ -117,8 +121,8 @@ router.get('/user', async (ctx: Context) => {
         });
 
         const command = new GetObjectCommand({
-            Bucket: 'ben-patreon-test',
-            Key: 'doge.png'
+            Bucket: bucket || '',
+            Key: file || ''
         });
 
         const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
